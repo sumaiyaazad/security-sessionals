@@ -7,12 +7,10 @@ Original file is located at
     https://colab.research.google.com/drive/1NoLVEBqkvrHwoYoEuxX0BeJvaJ5MtVrA
 """
 
-!pip install BitVector
-
-
 """Tables"""
 
 from BitVector import *
+
 Sbox = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -64,7 +62,7 @@ InvMixer = [
     [BitVector(hexstring="0D"), BitVector(hexstring="09"), BitVector(hexstring="0E"), BitVector(hexstring="0B")],
     [BitVector(hexstring="0B"), BitVector(hexstring="0D"), BitVector(hexstring="09"), BitVector(hexstring="0E")]
 ]
-
+round_constant = [BitVector(hexstring="0E")]
 b = BitVector(hexstring="4E")
 int_val = b.intValue()
 s = Sbox[int_val]
@@ -76,4 +74,63 @@ AES_modulus = BitVector(bitstring='100011011')
 bv1 = BitVector(hexstring="02")
 bv2 = BitVector(hexstring="63")
 bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)
-print(bv3)
+# print(bv3)
+
+
+# my portion
+
+round_constant = [BitVector(hexstring="01"), BitVector(hexstring="02"), BitVector(hexstring="04"),
+                  BitVector(hexstring="08"),
+                  BitVector(hexstring="10"), BitVector(hexstring="20"), BitVector(hexstring="40"),
+                  BitVector(hexstring="80"),
+                  BitVector(hexstring="1B"), BitVector(hexstring="36")]
+
+
+def g(last_word_of_key, round_constant):
+    # left shifting 8 bit
+    last_word_of_key_shifted = last_word_of_key[8:]+last_word_of_key[0:8]
+    # substitution box
+    last_word_of_key_shifted[0:8] = BitVector(intVal=Sbox[last_word_of_key_shifted[0:8].intValue()], size=8)
+    last_word_of_key_shifted[8:16] = BitVector(intVal=Sbox[last_word_of_key_shifted[8:16].intValue()], size=8)
+    last_word_of_key_shifted[16:24] = BitVector(intVal=Sbox[last_word_of_key_shifted[16:24].intValue()], size=8)
+    last_word_of_key_shifted[24:32] = BitVector(intVal=Sbox[last_word_of_key_shifted[24:32].intValue()], size=8)
+    # xor operation
+    last_word_of_key_shifted[0:8] = last_word_of_key_shifted[0:8].__xor__(round_constant)
+    return last_word_of_key_shifted
+
+
+def round_key(primary_key):
+    if len(primary_key) < 16:
+        primary_key = primary_key.ljust(16, "*")
+    else:
+        primary_key = primary_key[:16]
+    primary_key = BitVector(textstring=primary_key)
+    primary_key_hex = primary_key.get_hex_string_from_bitvector()
+    round_keys = [primary_key_hex]
+    round_key_words_bin = [[primary_key[i:i + 32] for i in range(0, 128, 32)]]
+    round_key_words_hex = [[primary_key_hex[i:i+8]] for i in range(0, 32, 8)]
+    for i in range(0, 10):
+        w0 = g(round_key_words_bin[i][3], round_constant[i])
+        w0 = w0.__xor__(round_key_words_bin[i][0])
+        w1 = w0.__xor__(round_key_words_bin[i][1])
+        w2 = w1.__xor__(round_key_words_bin[i][2])
+        w3 = w2.__xor__(round_key_words_bin[i][3])
+        round_key_words_bin.append([w0, w1, w2, w3])
+        #round_keys.append(w0.get_hex_string_from_bitvector() + w1.get_hex_string_from_bitvector() + w2.get_hex_string_from_bitvector() + w3.get_hex_string_from_bitvector())
+        round_keys.append((w0+w1+w2+w3).get_hex_string_from_bitvector())
+        print(round_keys[i+1])
+    return round_keys
+
+
+# def aes_encryption(plain_text, key):
+#     round_keys = round_key(key)
+#     add_round_key
+
+
+#plain_text = input("Plain Text: \n")
+plain_text = "Two One Nine Two"
+plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
+#key = input("Key: \n")
+key = "Thats my Kung Fu"
+key_hex = BitVector(textstring=key).get_hex_string_from_bitvector()
+# g("01100111001000000100011001110101",round_constant[0])
