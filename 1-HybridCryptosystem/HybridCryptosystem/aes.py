@@ -130,9 +130,9 @@ def add_round_key(key, plain_text):
     return state_matrix
 
 
-# def substitution(state_matrix):
-#     substitution_matrix = [[BitVector(intVal=Sbox[BitVector(hexstring=state_matrix[i][j]).intValue()], size=8).get_hex_string_from_bitvector() for j in range(0, 4)] for i in range(0, 4)]
-#     return substitution_matrix
+def substitution(state_matrix):
+    substitution_matrix = [[BitVector(intVal=Sbox[BitVector(hexstring=state_matrix[i][j]).intValue()], size=8).get_hex_string_from_bitvector() for j in range(0, 4)] for i in range(0, 4)]
+    return substitution_matrix
 
 
 def aes_encryption(plain_text, key, key_hex):
@@ -140,10 +140,11 @@ def aes_encryption(plain_text, key, key_hex):
     plain_text_word_hex = [[plain_text[i][j:j+2] for j in range(0, 8, 2)] for i in range(0, 4)]
     state_matrix = add_round_key(round_key_byte_hex[0], plain_text_word_hex)
     # for i in range(1,10):
-    # for i in range(1, 2):
-    #     substitution_matrix = substitution(state_matrix)
-    #     shifted_matrix = shift_row(substitution_matrix)
-    #     print(shifted_matrix)
+    for i in range(1, 2):
+        substitution_matrix = substitution(state_matrix)
+        # shifted_matrix = shift_row(substitution_matrix)
+        # print(shifted_matrix)
+        # add_round_key(round_key_byte_hex[i], state_matrix)
 
     #add_round_key(round_key_byte_hex[0],)
     # w0 = BitVector(hexstring="a1")
