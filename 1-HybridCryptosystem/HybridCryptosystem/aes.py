@@ -88,7 +88,7 @@ round_constant = [BitVector(hexstring="01"), BitVector(hexstring="02"), BitVecto
 
 def g(last_word_of_key, round_constant):
     # left shifting 8 bit
-    last_word_of_key_shifted = last_word_of_key[8:]+last_word_of_key[0:8]
+    last_word_of_key_shifted = last_word_of_key[8:] + last_word_of_key[0:8]
     # substitution box
     last_word_of_key_shifted[0:8] = BitVector(intVal=Sbox[last_word_of_key_shifted[0:8].intValue()], size=8)
     last_word_of_key_shifted[8:16] = BitVector(intVal=Sbox[last_word_of_key_shifted[8:16].intValue()], size=8)
@@ -108,8 +108,8 @@ def generate_round_key(primary_key):
     primary_key_hex = primary_key.get_hex_string_from_bitvector()
     round_keys = [primary_key_hex]
     round_key_words_bin = [[primary_key[i:i + 32] for i in range(0, 128, 32)]]
-    round_key_words_hex = [[primary_key_hex[i:i+8] for i in range(0, 32, 8)]]
-    round_key_byte_hex = [[[round_key_words_hex[0][j][i:i+2] for i in range(0, 8, 2)] for j in range(0, 4)]]
+    round_key_words_hex = [[primary_key_hex[i:i + 8] for i in range(0, 32, 8)]]
+    round_key_byte_hex = [[[round_key_words_hex[0][j][i:i + 2] for i in range(0, 8, 2)] for j in range(0, 4)]]
     for i in range(0, 10):
         w0 = g(round_key_words_bin[i][3], round_constant[i])
         w0 = w0.__xor__(round_key_words_bin[i][0])
@@ -117,21 +117,26 @@ def generate_round_key(primary_key):
         w2 = w1.__xor__(round_key_words_bin[i][2])
         w3 = w2.__xor__(round_key_words_bin[i][3])
         round_key_words_bin.append([w0, w1, w2, w3])
-        round_key_words_hex.append([w0.get_hex_string_from_bitvector(), w1.get_hex_string_from_bitvector(), w2.get_hex_string_from_bitvector(), w3.get_hex_string_from_bitvector()])
-        #round_keys.append(w0.get_hex_string_from_bitvector() + w1.get_hex_string_from_bitvector() + w2.get_hex_string_from_bitvector() + w3.get_hex_string_from_bitvector())
-        round_keys.append((w0+w1+w2+w3).get_hex_string_from_bitvector())
-        round_key_byte_hex.append([[round_key_words_hex[i+1][k][j:j+2] for j in range(0, 8, 2)] for k in range(0, 4)])
-        # print(round_keys[i+1])
-    return round_keys, round_key_words_hex, round_key_byte_hex
+        round_key_words_hex.append(
+            [w0.get_hex_string_from_bitvector(), w1.get_hex_string_from_bitvector(), w2.get_hex_string_from_bitvector(),
+             w3.get_hex_string_from_bitvector()])
+        round_keys.append((w0 + w1 + w2 + w3).get_hex_string_from_bitvector())
+        round_key_byte_hex.append(
+            [[round_key_words_hex[i + 1][k][j:j + 2] for j in range(0, 8, 2)] for k in range(0, 4)])
+    return round_key_byte_hex
 
 
 def add_round_key(key, plain_text):
-    state_matrix = [[BitVector(hexstring=key[j][i]).__xor__(BitVector(hexstring=plain_text[j][i])).get_hex_string_from_bitvector() for i in range(0, 4)] for j in range(0, 4)]
+    state_matrix = [
+        [BitVector(hexstring=key[j][i]).__xor__(BitVector(hexstring=plain_text[j][i])).get_hex_string_from_bitvector()
+         for i in range(0, 4)] for j in range(0, 4)]
     return state_matrix
 
 
 def substitute(state_matrix):
-    substitution_matrix = [[BitVector(intVal=Sbox[BitVector(hexstring=state_matrix[i][j]).intValue()], size=8).get_hex_string_from_bitvector() for j in range(0, 4)] for i in range(0, 4)]
+    substitution_matrix = [[BitVector(intVal=Sbox[BitVector(hexstring=state_matrix[i][j]).intValue()],
+                                      size=8).get_hex_string_from_bitvector() for j in range(0, 4)] for i in
+                           range(0, 4)]
     return substitution_matrix
 
 
@@ -147,18 +152,18 @@ def shift_row(substituted_matrix):
 
 def mix_column(shifted_matrix):
     mixed_col_matrix = [[], [], [], []]
-    for i in range(0,4):
+    for i in range(0, 4):
         for j in range(0, 4):
             xor_result = BitVector(hexstring="00")
             for k in range(0, 4):
-                xor_result = xor_result.__xor__(BitVector(hexstring=shifted_matrix[j][k]).gf_multiply_modular(BitVector(hexstring=Mixer[i][k].get_hex_string_from_bitvector()), AES_modulus, 8))
+                xor_result = xor_result.__xor__(BitVector(hexstring=shifted_matrix[j][k]).gf_multiply_modular(
+                    BitVector(hexstring=Mixer[i][k].get_hex_string_from_bitvector()), AES_modulus, 8))
             mixed_col_matrix[j].append(xor_result.get_hex_string_from_bitvector())
     return mixed_col_matrix
 
 
-def aes_encryption(plain_text, key):
-    round_keys, round_key_words_hex, round_key_byte_hex = generate_round_key(key)
-    plain_text_word_hex = [[plain_text[i][j:j+2] for j in range(0, 8, 2)] for i in range(0, 4)]
+def aes_encryption(plain_text, key, round_key_byte_hex):
+    plain_text_word_hex = [[plain_text[i][j:j + 2] for j in range(0, 8, 2)] for i in range(0, 4)]
     state_matrix = add_round_key(round_key_byte_hex[0], plain_text_word_hex)
     # for i in range(1,10):
     for i in range(1, 10):
@@ -170,7 +175,6 @@ def aes_encryption(plain_text, key):
     substituted_matrix = substitute(state_matrix)
     shifted_matrix = shift_row(substituted_matrix)
     state_matrix = add_round_key(round_key_byte_hex[10], shifted_matrix)
-    print(state_matrix)
     return state_matrix
 
 
@@ -181,17 +185,21 @@ def print_cipher_matrix(cipher_matrix):
     print(cipher_text)
 
 
-#plain_text = input("Plain Text: \n")
-# plain_text = "Two One Nine Two"
-plain_text = "CanTheyDoTheirFest"
-plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
-print(plain_text_hex)
-plain_text_word = [plain_text_hex[i:i+8] for i in range(0, 32, 8)]
-#key = input("Key: \n")
-# key = "Thats my Kung Fu"
-key = "BUET CSE17 Batch"
-key_hex = BitVector(textstring=key).get_hex_string_from_bitvector()
-print(key_hex)
-cipher_matrix = aes_encryption(plain_text_word, key)
-print_cipher_matrix(cipher_matrix)
-# g("01100111001000000100011001110101",round_constant[0])
+def start_simulation():
+    # plain_text = input("Plain Text: \n")
+    # plain_text = "Two One Nine Two"
+    plain_text = "CanTheyDoTheirFest"
+    plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
+    print(plain_text_hex)
+    plain_text_word = [plain_text_hex[i:i + 8] for i in range(0, 32, 8)]
+    # key = input("Key: \n")
+    # key = "Thats my Kung Fu"
+    key = "BUET CSE17 Batch"
+    key_hex = BitVector(textstring=key).get_hex_string_from_bitvector()
+    print(key_hex)
+    round_key_byte_hex = generate_round_key(key)
+    cipher_matrix = aes_encryption(plain_text_word, key, round_key_byte_hex)
+    print_cipher_matrix(cipher_matrix)
+
+
+start_simulation()
