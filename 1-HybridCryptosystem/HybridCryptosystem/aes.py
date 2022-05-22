@@ -145,6 +145,18 @@ def shift_row(substituted_matrix):
     return shifted_matrix
 
 
+def mix_column(shifted_matrix):
+    mixed_col_matrix = [[], [], [], []]
+    for i in range(0,4):
+        for j in range(0, 4):
+            xor_result = BitVector(hexstring="00")
+            for k in range(0, 4):
+                xor_result = xor_result.__xor__(BitVector(hexstring=shifted_matrix[j][k]).gf_multiply_modular(BitVector(hexstring=Mixer[i][k].get_hex_string_from_bitvector()), AES_modulus, 8))
+            print(xor_result.get_hex_string_from_bitvector())
+            mixed_col_matrix[j].append(xor_result.get_hex_string_from_bitvector())
+    return mixed_col_matrix
+
+
 def aes_encryption(plain_text, key):
     round_keys, round_key_words_hex, round_key_byte_hex = round_key(key)
     plain_text_word_hex = [[plain_text[i][j:j+2] for j in range(0, 8, 2)] for i in range(0, 4)]
@@ -153,7 +165,8 @@ def aes_encryption(plain_text, key):
     for i in range(1, 2):
         substituted_matrix = substitute(state_matrix)
         shifted_matrix = shift_row(substituted_matrix)
-        print(shifted_matrix)
+        mixed_col_matrix = mix_column(shifted_matrix)
+        # add_round_key(mixed_col_matrix, )
         # add_round_key(round_key_byte_hex[i], state_matrix)
 
     #add_round_key(round_key_byte_hex[0],)
