@@ -100,10 +100,6 @@ def g(last_word_of_key, round_constant):
 
 
 def generate_round_key(primary_key):
-    if len(primary_key) < 16:
-        primary_key = primary_key.ljust(16, "*")
-    else:
-        primary_key = primary_key[:16]
     primary_key = BitVector(textstring=primary_key)
     primary_key_hex = primary_key.get_hex_string_from_bitvector()
     round_keys = [primary_key_hex]
@@ -217,26 +213,37 @@ def print_matrix(matrix):
 
 def start_simulation():
     # plain_text = input("Plain Text: \n")
-    plain_text = "Two One Nine Two"
+    plain_text = "Two One Nine Two Four"
     # plain_text = "CanTheyDoTheirFest"
+    if len(plain_text) % 16 != 0:
+        extra = ((len(plain_text) // 16) + 1) * 16
+        plain_text = plain_text.ljust(extra, "*")
     plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
     print(plain_text_hex)
-    plain_text_word = [plain_text_hex[i:i + 8] for i in range(0, 32, 8)]
+    plain_text_word = [plain_text_hex[i:i + 8] for i in range(0, len(plain_text_hex), 8)]
     # key = input("Key: \n")
     key = "Thats my Kung Fu"
     # key = "BUET CSE17 Batch"
+    if len(key) < 16:
+        key = key.ljust(16, "*")
+    else:
+        key = key[:16]
     key_hex = BitVector(textstring=key).get_hex_string_from_bitvector()
     print(key_hex)
     key_scheduling_start_time = time.time()
     round_key_byte_hex = generate_round_key(key)
     key_scheduling_end_time = time.time()
+    cipher_matrix = []
     encryption_start_time = time.time()
-    cipher_matrix = aes_encryption(plain_text_word, round_key_byte_hex)
+    for i in range(0, len(plain_text_word), 4):
+        cipher_matrix += aes_encryption(plain_text_word[i:i+4], round_key_byte_hex)
     encryption_end_time = time.time()
     print("Cipher Text:")
     print_matrix(cipher_matrix)
+    deciphered_matrix = []
     decryption_start_time = time.time()
-    deciphered_matrix = aes_decryption(cipher_matrix, round_key_byte_hex)
+    for i in range(0, len(plain_text_word), 4):
+        deciphered_matrix += aes_decryption(cipher_matrix[i:i+4], round_key_byte_hex)
     decryption_end_time = time.time()
     print("Deciphered Text:")
     print_matrix(deciphered_matrix)
