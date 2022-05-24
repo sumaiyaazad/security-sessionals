@@ -90,39 +90,52 @@ def rsa_encryption(e, n, plain_text):
     # print(plain_text)
     plain_text_int = [ord(i) for i in plain_text]
     # print(plain_text_int)
-    cipher_int = [pow(i, e) % n for i in plain_text_int]
+    cipher_int = [pow(i, e, n) for i in plain_text_int]
     return cipher_int
 
 
 def rsa_decryption(d, n, cipher_text_int):
-    deciphered_int = [pow(i, d) % n for i in cipher_text_int]
-    deciphered_text = [ chr(i) for i in deciphered_int]
+    deciphered_int = [pow(i, d, n) for i in cipher_text_int]
+    deciphered_text = [chr(i) for i in deciphered_int]
     return deciphered_text
 
 
 def start_simulation():
-    for k in range(16, 130, 16):
-        prime_numbers = generate_prime(k)
-        n = prime_numbers[0] * prime_numbers[1]
-        phi_n = (prime_numbers[0] - 1) * (prime_numbers[1] - 1)
-        e = find_e(phi_n)
-        d = find_d(e, phi_n)
-        plain_text = "13"
+    # for k in range(32, 33, 16):
+    key_length = [16, 32, 64, 128]
+    for k in key_length:
+        key_generation_start_time = time.time()
+        # prime_numbers = generate_prime(k)
+        # n = prime_numbers[0] * prime_numbers[1]
+        # phi_n = (prime_numbers[0] - 1) * (prime_numbers[1] - 1)
+        # e = find_e(phi_n)
+        # d = find_d(e, phi_n)
+        key_generation_end_time = time.time()
+        plain_text = "CanTheyArrangeTheFest?"
+        # plain_text = "13"
         # plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
-        cipher_text = rsa_encryption(e, n, plain_text)
-        print(cipher_text)
-        deciphered_text = rsa_decryption(d, n, cipher_text)
+        encryption_start_time = time.time()
+        cipher_text = rsa_encryption(45097, 2571216841, plain_text)
+        # cipher_text = rsa_encryption(e, n, plain_text)
+        encryption_end_time = time.time()
+        # print(cipher_text)
+        decryption_start_time = time.time()
+        deciphered_text = rsa_decryption(int(2123962321.0), 2571216841, cipher_text)
+        # deciphered_text = rsa_decryption(d, n, cipher_text)
         deciphered_text = "".join(i for i in deciphered_text)
-        print(deciphered_text)
-
+        decryption_end_time = time.time()
+        # print(deciphered_text)
+        print("k= ", k, " key generation= %s seconds" % (key_generation_start_time - key_generation_end_time),
+              " encryption time= %s seconds" % (encryption_end_time - encryption_start_time),
+              " decryption time= %s seconds" % (decryption_end_time - decryption_start_time))
 
 
 # print(s[0], " ", s[1])
 # n = s[0] * s[1]
 # phi_n = (s[0] - 1) * (s[1] - 1)
-e = find_e(120)
+# e = find_e(120)
 # print(e)
-d = find_d(e, 120)
+# d = find_d(e, 120)
 # print(d)
 start_simulation()
 # bv = BitVector(intVal=12)
