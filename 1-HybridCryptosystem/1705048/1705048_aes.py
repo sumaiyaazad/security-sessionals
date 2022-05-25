@@ -207,8 +207,7 @@ def aes_decryption(encrypted_matrix, round_key_byte_hex):
 def print_matrix(matrix):
     cipher = "".join(i for j in matrix for i in j)
     cipher_text = BitVector(hexstring=cipher).get_text_from_bitvector()
-    print(cipher)
-    print(cipher_text)
+    return cipher, cipher_text
 
 
 def start_simulation():
@@ -239,7 +238,9 @@ def start_simulation():
         cipher_matrix += aes_encryption(plain_text_word[i:i+4], round_key_byte_hex)
     encryption_end_time = time.time()
     print("Cipher Text:")
-    print_matrix(cipher_matrix)
+    cipher, cipher_text = print_matrix(cipher_matrix)
+    print(cipher)
+    print(cipher_text)
     deciphered_matrix = []
     decryption_start_time = time.time()
     for i in range(0, len(plain_text_word), 4):
@@ -253,4 +254,5 @@ def start_simulation():
     print("Decryption Time: %s seconds" % (decryption_end_time-decryption_start_time))
 
 
-start_simulation()
+
+# start_simulation()

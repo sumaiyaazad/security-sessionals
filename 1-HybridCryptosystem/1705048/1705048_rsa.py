@@ -129,17 +129,4 @@ def start_simulation():
               " encryption time= %s seconds" % (encryption_end_time - encryption_start_time),
               " decryption time= %s seconds" % (decryption_end_time - decryption_start_time))
 
-
-# print(s[0], " ", s[1])
-# n = s[0] * s[1]
-# phi_n = (s[0] - 1) * (s[1] - 1)
-# e = find_e(120)
-# print(e)
-# d = find_d(e, 120)
-# print(d)
-start_simulation()
-# bv = BitVector(intVal=12)
-# bv = bv.gen_random_bits(32)
-# print(bv.test_for_primality())
-# print(primality_test(17, 5))
-# print(primality_test(41, 5))
+# start_simulation()
