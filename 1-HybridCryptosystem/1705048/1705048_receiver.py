@@ -1,7 +1,5 @@
-# Import socket module
 import socket
 import importlib
-from BitVector import *
 
 rsa = importlib.import_module('1705048_rsa')
 aes = importlib.import_module('1705048_aes')

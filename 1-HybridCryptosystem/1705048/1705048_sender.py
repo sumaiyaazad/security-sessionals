@@ -1,8 +1,5 @@
-# first of all import the socket library
 import socket
 import importlib
-from BitVector import *
-import os
 
 rsa = importlib.import_module('1705048_rsa')
 aes = importlib.import_module('1705048_aes')
