@@ -87,19 +87,17 @@ round_constant = [BitVector(hexstring="01"), BitVector(hexstring="02"), BitVecto
 
 
 def g(last_word_of_key, round_constant):
-    # left shifting 8 bit
     last_word_of_key_shifted = last_word_of_key[8:] + last_word_of_key[0:8]
-    # substitution box
     last_word_of_key_shifted[0:8] = BitVector(intVal=Sbox[last_word_of_key_shifted[0:8].intValue()], size=8)
     last_word_of_key_shifted[8:16] = BitVector(intVal=Sbox[last_word_of_key_shifted[8:16].intValue()], size=8)
     last_word_of_key_shifted[16:24] = BitVector(intVal=Sbox[last_word_of_key_shifted[16:24].intValue()], size=8)
     last_word_of_key_shifted[24:32] = BitVector(intVal=Sbox[last_word_of_key_shifted[24:32].intValue()], size=8)
-    # xor operation
     last_word_of_key_shifted[0:8] = last_word_of_key_shifted[0:8].__xor__(round_constant)
     return last_word_of_key_shifted
 
 
 def generate_round_key(primary_key):
+    # primary_key = fetch_key(primary_key)
     primary_key = BitVector(textstring=primary_key)
     primary_key_hex = primary_key.get_hex_string_from_bitvector()
     round_keys = [primary_key_hex]
@@ -184,7 +182,6 @@ def aes_encryption(plain_text, round_key_byte_hex):
         shifted_matrix = shift_row(substituted_matrix, 1)
         mixed_col_matrix = mix_column(shifted_matrix, 1)
         state_matrix = add_round_key(round_key_byte_hex[i], mixed_col_matrix)
-        # print(state_matrix)
     substituted_matrix = substitute(state_matrix, 1)
     shifted_matrix = shift_row(substituted_matrix, 1)
     state_matrix = add_round_key(round_key_byte_hex[10], shifted_matrix)
@@ -207,52 +204,84 @@ def aes_decryption(encrypted_matrix, round_key_byte_hex):
 def print_matrix(matrix):
     cipher = "".join(i for j in matrix for i in j)
     cipher_text = BitVector(hexstring=cipher).get_text_from_bitvector()
-    return cipher, cipher_text
+    return cipher_text
+
+
+def fetch_text(plain_text):
+    if len(plain_text) % 16 != 0:
+        extra = ((len(plain_text) // 16) + 1) * 16
+        plain_text = plain_text.ljust(extra, " ")
+    plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
+    return plain_text, plain_text_hex
+
+
+def fetch_word(plain_text):
+    plain_text, plain_text_hex = fetch_text(plain_text)
+    plain_text_word = [plain_text_hex[i:i + 8] for i in range(0, len(plain_text_hex), 8)]
+    return plain_text_word
+
+
+def fetch_matrix(cipher_text):
+    cipher_hex = BitVector(textstring=cipher_text).get_hex_string_from_bitvector()
+    cipher_matrix = [[cipher_hex[i:i+2] for i in range(j, j+8, 2)] for j in range(0, len(cipher_hex), 8)]
+    return cipher_matrix
+
+
+def fetch_key(primary_key):
+    if len(primary_key) < 16:
+        primary_key = primary_key.ljust(16, " ")
+    else:
+        primary_key = primary_key[:16]
+    return primary_key
+
+
+def encrypt(plain_text, round_key_byte_hex):
+    cipher_matrix = []
+    plain_text_word = fetch_word(plain_text)
+    for i in range(0, len(plain_text_word), 4):
+        cipher_matrix += aes_encryption(plain_text_word[i:i + 4], round_key_byte_hex)
+    cipher_text = print_matrix(cipher_matrix)
+    return cipher_text
+
+
+def decrypt(cipher_text, round_key_byte_hex):
+    deciphered_matrix = []
+    cipher_matrix = fetch_matrix(cipher_text)
+    for i in range(0, len(cipher_text)//4, 4):
+        deciphered_matrix += aes_decryption(cipher_matrix[i:i + 4], round_key_byte_hex)
+    deciphered_text = print_matrix(deciphered_matrix)
+    return deciphered_text
 
 
 def start_simulation():
-    # plain_text = input("Plain Text: \n")
-    plain_text = "Two One Nine Two Four"
+    plain_text = input("Plain Text: \n")
+    # plain_text = "Two One Nine Two Four"
     # plain_text = "CanTheyDoTheirFest"
-    if len(plain_text) % 16 != 0:
-        extra = ((len(plain_text) // 16) + 1) * 16
-        plain_text = plain_text.ljust(extra, "*")
-    plain_text_hex = BitVector(textstring=plain_text).get_hex_string_from_bitvector()
+    plain_text, plain_text_hex = fetch_text(plain_text)
     print(plain_text_hex)
-    plain_text_word = [plain_text_hex[i:i + 8] for i in range(0, len(plain_text_hex), 8)]
-    # key = input("Key: \n")
-    key = "Thats my Kung Fu"
+    key = input("Key: \n")
+    # key = "Thats my Kung Fu"
     # key = "BUET CSE17 Batch"
-    if len(key) < 16:
-        key = key.ljust(16, "*")
-    else:
-        key = key[:16]
+    key = fetch_key(key)
     key_hex = BitVector(textstring=key).get_hex_string_from_bitvector()
     print(key_hex)
     key_scheduling_start_time = time.time()
     round_key_byte_hex = generate_round_key(key)
     key_scheduling_end_time = time.time()
-    cipher_matrix = []
     encryption_start_time = time.time()
-    for i in range(0, len(plain_text_word), 4):
-        cipher_matrix += aes_encryption(plain_text_word[i:i+4], round_key_byte_hex)
+    cipher_text = encrypt(plain_text, round_key_byte_hex)
     encryption_end_time = time.time()
     print("Cipher Text:")
-    cipher, cipher_text = print_matrix(cipher_matrix)
-    print(cipher)
     print(cipher_text)
-    deciphered_matrix = []
     decryption_start_time = time.time()
-    for i in range(0, len(plain_text_word), 4):
-        deciphered_matrix += aes_decryption(cipher_matrix[i:i+4], round_key_byte_hex)
+    deciphered_text = decrypt(cipher_text, round_key_byte_hex)
     decryption_end_time = time.time()
     print("Deciphered Text:")
-    print_matrix(deciphered_matrix)
+    print(deciphered_text)
     print("Execution Time")
     print("Key Scheduling: %s seconds" % (key_scheduling_end_time-key_scheduling_start_time))
-    print("Encryption Time: %s seconds" % (encryption_end_time-encryption_start_time))
-    print("Decryption Time: %s seconds" % (decryption_end_time-decryption_start_time))
-
+    print("Encryption Time: %s seconds" % (encryption_end_time - encryption_start_time))
+    print("Decryption Time: %s seconds" % (decryption_end_time - decryption_start_time))
 
 
 # start_simulation()
