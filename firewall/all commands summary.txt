@@ -1,0 +1,213 @@
+1. run dcup in the folder
+2. go to kernel module there needs to oly two file makefile and hello.c
+3. run make  --- without make command kernel module will not output .ko file
+4. sudo insmod hello.ko --- we need to insert .ko file
+5. lsmod | grep hello   --- check if hello module is there
+6. sudo rmmod hello
+7. dmesg
+8. man page --- https://linux.die.net/man/8/iptables
+9. converting ip address to dotted decimal ---
+
+u32 ip_addr;
+char ip[16] = "8.8.8.8";
+in4_pton(ip, -1, (u8 *)&ip_addr, \0', NULL);
+
+10. dig @8.8.8.8 example.com
+11. packet header to see port or anything
+struct iphdr *iph = ip_hdr(skb) // (need to include <linux/ip.h>)
+struct tcphdr *tcph = tcp_hdr(skb) // (need to include <linux/tcp.h>)
+struct udphdr *udph = udp_hdr(skb) // (need to include <linux/udp.h>)
+struct icmphdr *icmph = icmp_hdr(skb)
+
+12. hook number
+NF_INET_PRE_ROUTING
+NF_INET_LOCAL_IN
+NF_INET_FORWARD
+NF_INET_LOCAL_OUT
+NF_INET_POST_ROUTING
+
+IPTABLES ---------------------------
+these are operation
+1 -L ---> list
+2. -D ---> Delete
+3. -A ---> append rules
+4. -I ---> insert
+5. -R ---> replace
+6. -F ---> flush
+7. -P ---> policy
+8. -p ---> protocol
+9. -h ---> help
+10. -d ---> specify destination ip
+
+these are rule 
+9. DROP --> rule for dropping packets
+10. ACCEPT --> rule for accepting packets
+
+11. INPUT ---> incoming
+12. OUTPUT ---> outgoing,   for altering locally-generated packets before routing
+13. FORWARD ---> forward (both incoming and outgoing)
+Explanation: we can add the interface options here using "-i xyz" (coming in from the xyz interface) and/or "-o xyz" (going out from the xyz interface)
+14. PREROUTING ---> prerouting  for altering packets as soon as they come in
+15. POSTROUTING ---> postrouting for altering packets as they are about to go out
+Upor thke niche rule er priority thakbe....
+jegula accept krte chai upore r reject gula niche dibo
+
+special commands ----------------------
+
+1. docker restart <Container ID>
+to restore the states of all the tables is to restart the container
+2. ip addr
+to find out interface name
+
+
+port numbers --------------------
+ssh 22
+telnet 23
+udp 53
+tcp 8080 
+
+
+sample iptables commands -----------------
+
+default set gula alada kre accept krte hbe, karon eita actually rule na, -F dile khali rule flush hocche
+default policy flush hocche na
+
+1. iptables -t <table> -<operation> <chain> <rule> -j <target>
+if no -t mentioned then default table is filter table
+2. iptables -t nat -L -n
+list all rules of nat table without line number
+3. iptables -t filter -L -n --line-numbers
+List all the rules in filter table (with line number)
+4. iptables -t filter -D INPUT 2  (-D --delete chain rule specification)
+Delete rule No. 2 in the INPUT chain of the filter table
+5. iptables -t filter -A INPUT <rule> -j DROP  (-A --append chain one or more rules to the end of selected chain)
+Drop all the incoming packets that satisfy the <rule>
+6. iptables -F                    (--flush)
+delete all rules for filtertabe, donot do this on nat table ----> disastrous
+7. iptables -p <protocol name--icmp or tcp or udp ..> -h
+ki ki type er opor filtering possible seita eita diye dekha jabe
+
+
+8. iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+accept incoming icmp echo request
+9. iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+accept outgoing icmp echo reply 
+10. iptables -P OUTPUT DROP
+Set default drop rule for OUTPUT
+11. iptables -P INPUT DROP 
+Set default drop rule for INPUT
+12. iptables -P OUTPUT ACCEPT
+Set default accept rule for output
+13. iptables -P INPUT ACCEPT
+Set default accept rule for input
+
+14. iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -j DROP
+no external host can ping interal host but the router
+15. iptables -A FORWARD -i eth1 -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-reply -j ACCEPT
+internal host can ping external host
+16. iptables -P FORWARD DROP
+17. iptables -L -n --- to see rules
+18. iptables -L -n -v --- to see rules on interface --- doesnot work
+19. iptables -F
+20. iptables -P FORWARD ACCEPT
+
+21. iptables -A FORWARD -i eth0 -p tcp -d 192.168.60.5 --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -p tcp -s 192.168.60.5 --sport 23 -j ACCEPT
+Outside hosts can access the telnet server on 192.168.60.5, not the other internal hosts.
+22. iptables -P DROP
+
+or second approach
+21. iptables -A FORWARD -i eth0 -p tcp -d 192.168.60.5 --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -p tcp -s 192.168.60.5 --sport 23 -j ACCEPT
+Outside hosts can access the telnet server on 192.168.60.5, not the other internal hosts.
+22. iptables -A FORWARD -i eth0 -p tcp --dport 23 -j DROP
+iptables -A FORWARD -i eth1 -p tcp --sport 23 -j DROP
+iptables -A FORWARD -i eth0 -p tcp --sport 23 -j DROP
+iptables -A FORWARD -i eth1 -p tcp --dport 23 -j DROP
+iptables -P FORWARD ACCEPT
+
+forwarding happens between two network
+&& diye concatenate kra jay command
+
+
+task 3
+1. nc -lt 9090
+start tc server at port 9090
+nc <ip> portlistening to server
+nc -lu 9090
+start udp server at port 9090
+nc -u <ip> <port>
+listening to udp server
+typ something and server will receive
+nc -t <ip> <port>
+typ something and server will receive
+nc -ltv <port>
+inside listening --- outsider will not be able to listen
+nc -l <port>
+nc <ip> <port>
+same as udp
+
+
+1.  conntrack -L
+router e dile router or thke jaoa shb tcp, udp packet show kre
+ttl ache kichukhn por ar dekhay na
+
+possible states INVALID, ESTABLISHED, NEW, RELATED
+
+2. iptables -A FORWARD -p tcp -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+established r related accept krbe
+3. iptables -A FORWARD -p tcp -i eth0 --dport 8080 --syn  -m conntrack --ctstate NEW -j ACCEPT
+syn er new packet accept krbe
+4. iptables -P FORWARD DROP
+
+nc -l 8080 ---internal host  
+nc <ip> 8080 ---external host
+
+
+iptables -A FORWARD -i eth0 -p tcp -d 192.168.60.5 --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -p tcp -s 192.168.60.5 --sport 23 -j ACCEPT
+iptables -A FORWARD -p tcp -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -p tcp -i eth0 --dport 8080 --syn  -m conntrack --ctstate NEW -j ACCEPT
+iptables -P FORWARD DROP
+
+
+1.iptables -A FORWARD -s 10.9.0.5 -m limit --limit 10/minute --limit-burst 5 -j ACCEPT
+source port 10.9.0.5 hole per minute e 10ta r eksthe 5 hole accept krbe 
+iptables -A FORWARD -s 10.9.0.5 -j DROP
+baki shb drop krbe
+from 192.168.60.5 ping 10.9.0.5
+
+
+iptables -F && iptables -P OUTPUT ACCEPT && iptables -P INPUT ACCEPT && iptables -P FORWARD ACCEPT
+
+
+B@2 online
+
+// Rules for router
+
+    iptables -A FORWARD -i eth0 -p tcp --dport 22 -j DROP     // 1
+    iptables -A FORWARD -i eth1 -p tcp --sport 22 -j DROP  
+
+    iptables -A FORWARD -i eth0 -s 10.9.0.5 -d 192.168.60.6 -p tcp --dport 23 -j ACCEPT // 4 ?
+    iptables -A FORWARD -i eth1 -s 192.168.60.6 -d 10.9.0.5 -p tcp --sport 23 -j ACCEPT
+
+    iptables -A INPUT -d 10.9.0.11 -p tcp --dport 22 -j DROP       // 2
+    iptables -A INPUT -d 192.168.60.11 -p tcp --dport 22 -j DROP
+
+
+// Rules for 10.9.0.1
+    iptables -A OUTPUT -p icmp --icmp-type echo-request -j DROP  // 6
+    iptables -A INPUT -p icmp --icmp-type echo-request -j DROP   // 7
+
+
+// All hosts but 10.9.0.5
+    iptables -A OUTPUT -p tcp --dport 23 -j DROP     // 5
+    iptables -A OUTPUT -p icmp --icmp-type echo-request -j DROP  // 8 
+
+iptables -P OUTPUT ACCEPT
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+
+
+iptables -F && iptables -P FORWARD ACCEPT

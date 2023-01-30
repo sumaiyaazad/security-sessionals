@@ -7,7 +7,11 @@ aes = importlib.import_module('1705048_aes')
 
 def decrypt(message, private_key):
     d, n = private_key.split("\n")[0], private_key.split("\n")[1]
-    cipher_text, cipher_key = message.split("\n")[0], message.split("\n")[1]
+    cipher_text, cipher_key = message.split("taaha")[0], message.split("taaha")[1]
+    # print(message)
+    # print("cipher_text ", cipher_text)
+    # print("cipher_key ", cipher_key)
+    # print(private_key)
     deciphered_key = rsa.rsa_decryption(int(d), int(n), cipher_key)
     round_key_byte_hex = aes.generate_round_key(deciphered_key)
     deciphered_text = aes.decrypt(cipher_text, round_key_byte_hex)
@@ -26,8 +30,10 @@ while 1:
     message = s.recv(4096).decode()
     if "established" in message:
         print(message)
+    elif "data" in message:
+        print("sender is sending data")
     else:
-        print("message received")
+        print("data received")
         file_name = "don't open this/PRK.txt"
         in_file = open(file_name, "r", encoding='utf-8')
         private_key = in_file.read()

@@ -7,9 +7,12 @@ aes = importlib.import_module('1705048_aes')
 
 def encrypt():
     plain_text = input("plain text: \n")
+    # plain_text = "jheuiwyruiweyhriwhfopiytyerituigjhoervgioteutrioutoirutoir6789fdgdfgfgfdg"
     plain_text, plain_text_hex = aes.fetch_text(plain_text)
     key = input("aes encryption key: \n")
+    # key = "hyeriwordiwehiopeiwrefhjfioerpicgjripo"
     key = aes.fetch_key(key)
+    # print("key ", key)
     round_key_byte_hex = aes.generate_round_key(key)
     cipher_text = aes.encrypt(plain_text, round_key_byte_hex)
     rsa_key_length = input("rsa encryption key: \n")
@@ -19,6 +22,9 @@ def encrypt():
     e = rsa.find_e(phi_n)
     d = rsa.find_d(e, phi_n)
     cipher_key = rsa.rsa_encryption(e, n, key)
+    # print("e,d,n ", e, d, n)
+    # print("cipher-key ", cipher_key)
+    # print("cipher-text ", cipher_text)
     return plain_text, cipher_text, cipher_key, d, n
 
 
@@ -43,7 +49,8 @@ while True:
     file_content = str(d)+"\n"+str(n)
     out_file.write(file_content.encode())
     out_file.close()
-    message = str(cipher_text)+"\n"+str(cipher_key)
+    c.send("sending data".encode())
+    message = str(cipher_text)+"taaha"+str(cipher_key)
     c.send(message.encode())
     message = c.recv(4096).decode()
     if "close" in message:
@@ -51,6 +58,8 @@ while True:
         in_file = open(file_name, "r", encoding='utf-8')
         secret = in_file.read()
         in_file.close()
+        # print("secret ", type(secret), secret, len(secret))
+        # print("plain_text ", type(plain_text), plain_text, len(plain_text))
         if plain_text == secret:
             print("message sent successfully")
         else:

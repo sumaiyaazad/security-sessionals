@@ -100,8 +100,8 @@ def start_simulation():
         decryption_start_time = time.time()
         deciphered_text = rsa_decryption(int(d), int(n), cipher_text)
         decryption_end_time = time.time()
-        print("e,d,n ", e,d,n)
-        print("cipher-text ", cipher_text)
+        # print("e,d,n ", e,d,n)
+        # print("cipher-text ", cipher_text)
         print(deciphered_text)
         print("k= ", k, " key generation= %s seconds" % (key_generation_end_time - key_generation_start_time),
               " encryption time= %s seconds" % (encryption_end_time - encryption_start_time),

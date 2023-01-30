@@ -1,0 +1,3 @@
+csrf - https://youtu.be/Yy0SBQ89lJ8
+xss - https://youtu.be/mJsAvsRVIdY
+sql injection - https://youtu.be/5PJIbP6n9ec
